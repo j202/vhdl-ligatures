@@ -22,16 +22,20 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      - run: node scripts/update-grammar.mjs latest
+      - id: update-grammar
+        run: |
+          node scripts/update-grammar.mjs latest
+          echo "tag=$(jq -r .tag grammar/tree-sitter-vhdl.version.json)" >> "$GITHUB_OUTPUT"
 
       - run: npm test
 
       - uses: peter-evans/create-pull-request@v7
         with:
           add-paths: grammar/tree-sitter-vhdl.version.json
-          branch: bump-tree-sitter-vhdl-grammar
-          commit-message: Bump tree-sitter-vhdl grammar pin
-          title: Bump tree-sitter-vhdl grammar pin
+          branch: bump-tree-sitter-vhdl-grammar-${{ steps.update-grammar.outputs.tag }}
+          commit-message: Bump tree-sitter-vhdl grammar pin to ${{ steps.update-grammar.outputs.tag }}
+          title: Bump tree-sitter-vhdl grammar pin to ${{ steps.update-grammar.outputs.tag }}
           body: >
-            A newer tree-sitter-vhdl release passed the test suite against
-            grammar.ts's assumptions about upstream node types and behavior.
+            tree-sitter-vhdl ${{ steps.update-grammar.outputs.tag }} passed the
+            test suite against grammar.ts's assumptions about upstream node
+            types and behavior.
