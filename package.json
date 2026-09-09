@@ -1,0 +1,33 @@
+{
+  "name": "vhdl-ligatures",
+  "displayName": "VHDL Ligatures",
+  "description": "Turns on ligature rendering for VHDL's two-character operators, using a real parser to disambiguate signal-assignment from comparison.",
+  "version": "0.0.1",
+  "publisher": "j202",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "scripts": {
+    "postinstall": "node scripts/update-grammar.mjs",
+    "build": "tsc -p .",
+    "watch": "tsc -p . --watch",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "update-grammar": "node scripts/update-grammar.mjs"
+  },
+  "dependencies": {
+    "web-tree-sitter": "^0.25.10"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "@types/vscode": "^1.136.0",
+    "typescript": "^7.0.2"
+  }
+}
