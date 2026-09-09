@@ -1,0 +1,37 @@
+name: Check upstream grammar
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      - run: node scripts/update-grammar.mjs latest
+
+      - run: npm test
+
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          add-paths: grammar/tree-sitter-vhdl.version.json
+          branch: bump-tree-sitter-vhdl-grammar
+          commit-message: Bump tree-sitter-vhdl grammar pin
+          title: Bump tree-sitter-vhdl grammar pin
+          body: >
+            A newer tree-sitter-vhdl release passed the test suite against
+            grammar.ts's assumptions about upstream node types and behavior.
