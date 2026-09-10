@@ -1,4 +1,8 @@
-# VHDL Ligatures
+<p align="center">
+  <img src="icon.png" width="120" alt="VHDL Ligatures icon">
+</p>
+
+<h1 align="center">VHDL Ligatures</h1>
 
 A VS Code extension that turns on ligature rendering for VHDL's two-character operators (`<=`, `:=`, `=>`, `>=`, `/=`) in `.vhd`/`.vhdl` files, using a real parser ([`tree-sitter-vhdl`](https://github.com/jpt13653903/tree-sitter-vhdl)) to handle the one case ligatures can't manage on their own: `<=` means signal assignment (`sig <= value;`) or comparison (`if a <= b then`) depending on grammar context, and a ligature only ever sees the same two characters.
 
