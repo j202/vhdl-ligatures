@@ -44,4 +44,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - run: npx vsce publish -p "${{ secrets.VSCE_PAT }}"
+      # --packagePath publishes the exact file just uploaded above, instead
+      # of vsce's default behavior of silently repackaging from source again
+      # here - without it, the release asset and the published package are
+      # two separate builds and never have matching checksums, even though
+      # both come from the same commit.
+      - run: npx vsce publish -p "${{ secrets.VSCE_PAT }}" --packagePath *.vsix
