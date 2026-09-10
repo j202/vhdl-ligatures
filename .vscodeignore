@@ -1,0 +1,23 @@
+.github/**
+.vscode/**
+.cspell/**
+.cspell.yaml
+.pre-commit-config.yaml
+scripts/**
+src/**
+test/**
+test-fixtures/**
+tsconfig.json
+package-lock.json
+**/*.map
+.gitignore
+
+# Only the CJS build is used at runtime (the extension is required, not
+# imported) - the rest of this package is its ESM build, debug build, and
+# pre-bundling sources, none of which the extension ever loads.
+node_modules/web-tree-sitter/tree-sitter.js
+node_modules/web-tree-sitter/web-tree-sitter.d.ts
+node_modules/web-tree-sitter/README.md
+node_modules/web-tree-sitter/debug/**
+node_modules/web-tree-sitter/lib/**
+node_modules/web-tree-sitter/src/**
