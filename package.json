@@ -5,8 +5,13 @@
   "version": "0.0.1",
   "publisher": "j202",
   "license": "MIT",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/j202/vhdl-ligatures.git"
+  },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.136.0"
   },
   "categories": [
     "Other"
@@ -20,7 +25,10 @@
     "build": "tsc -p .",
     "watch": "tsc -p . --watch",
     "test": "npm run build && node --test test/*.test.mjs",
-    "update-grammar": "node scripts/update-grammar.mjs"
+    "update-grammar": "node scripts/update-grammar.mjs",
+    "vscode:prepublish": "npm run build",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "dependencies": {
     "web-tree-sitter": "^0.25.10"
@@ -28,6 +36,7 @@
   "devDependencies": {
     "@types/node": "^26.4.1",
     "@types/vscode": "^1.136.0",
+    "@vscode/vsce": "^3.9.2",
     "typescript": "^7.0.2"
   }
 }
