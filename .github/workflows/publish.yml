@@ -7,6 +7,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # VSCE_PAT lives here, not as a repository secret, so ci.yml and
+    # bump-grammar.yml can never reach it.
+    environment: marketplace
     permissions:
       contents: write
     steps:
