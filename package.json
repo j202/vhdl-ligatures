@@ -2,7 +2,7 @@
   "name": "vhdl-ligatures",
   "displayName": "VHDL Ligatures",
   "description": "Turns on ligature rendering for VHDL's two-character operators, using a real parser to disambiguate signal-assignment from comparison.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "j202",
   "license": "MIT",
   "icon": "icon.png",
