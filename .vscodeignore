@@ -11,6 +11,7 @@ tsconfig.json
 package-lock.json
 **/*.map
 .gitignore
+.claude/**
 
 # Only the CJS build is used at runtime (the extension is required, not
 # imported) - the rest of this package is its ESM build, debug build, and
