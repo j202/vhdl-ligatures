@@ -5,4 +5,5 @@ commitizen
 downto
 fira
 liga
+pipx
 vhdl
