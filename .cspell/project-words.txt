@@ -1,6 +1,7 @@
 brunsfeld
 calt
 cascadia
+commitizen
 downto
 fira
 liga
