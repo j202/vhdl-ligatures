@@ -1,3 +1,7 @@
+default_install_hook_types: [pre-commit, commit-msg]
+# Hooks run at commit time only; cspell and commitizen also see the commit
+# message.
+default_stages: [pre-commit]
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -16,3 +20,14 @@ repos:
     rev: v10.2.0
     hooks:
       - id: cspell
+        stages: [pre-commit, commit-msg]
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.16.5
+    hooks:
+      - id: commitizen
+        # Limits the first line to 72 characters. args replaces the hook's
+        # defaults, so --allow-abort and --commit-msg-file are repeated, with
+        # --commit-msg-file last because pre-commit appends the message file.
+        # -l is passed as a flag because cz ignores message_length_limit in
+        # .cz.toml; ci.yml passes the same flag.
+        args: [--allow-abort, -l, "72", --commit-msg-file]

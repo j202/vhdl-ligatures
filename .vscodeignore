@@ -2,6 +2,7 @@
 .vscode/**
 .cspell/**
 .cspell.yaml
+.cz.toml
 .pre-commit-config.yaml
 scripts/**
 src/**

@@ -1,0 +1,8 @@
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "npm"
+tag_format = "v$version"
+# Breaking changes bump the minor version while the major version is 0.
+major_version_zero = true
+update_changelog_on_bump = true
+changelog_incremental = true

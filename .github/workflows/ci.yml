@@ -29,3 +29,45 @@ jobs:
         with:
           name: vhdl-ligatures-vsix
           path: '*.vsix'
+
+  commits:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - run: pip install commitizen==4.16.5
+
+      # -l matches the pre-commit hook; cz ignores message_length_limit in
+      # .cz.toml.
+      - run: cz check -l 72 --rev-range "$BASE_SHA..$HEAD_SHA"
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # One file per commit, named by its hash, so cspell reports the commit
+      # directly. It runs from inside that directory because a glob outside
+      # the working directory matches nothing, and --config points at the
+      # repo's settings because the files sit outside the repo.
+      - name: Spellcheck commit messages
+        run: |
+          mkdir "$RUNNER_TEMP/msgs"
+          for c in $(git rev-list "$BASE_SHA..$HEAD_SHA"); do
+            git log -1 --format=%B "$c" > "$RUNNER_TEMP/msgs/$c.txt"
+          done
+          cd "$RUNNER_TEMP/msgs"
+          npx --yes cspell-cli@10.2.0 --no-progress --no-must-find-files \
+            --config "$GITHUB_WORKSPACE/.cspell.yaml" "*.txt"
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
