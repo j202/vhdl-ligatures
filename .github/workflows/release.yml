@@ -37,17 +37,17 @@ jobs:
           echo "::error::Releases run from main; other branches support dry_run only"
           exit 1
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_TOKEN }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
 
@@ -76,7 +76,7 @@ jobs:
       - run: npm run package
 
       # The Marketplace publish downloads this same file from the release.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vhdl-ligatures-vsix
           path: '*.vsix'
