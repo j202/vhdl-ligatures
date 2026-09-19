@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      increment:
+        description: Version increment; auto derives it from the commits since the last tag
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+      dry_run:
+        description: Bump, test and build without pushing, releasing or publishing
+        type: boolean
+        default: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # RELEASE_TOKEN lives here, not as a repository secret, so ci.yml and
+    # bump-grammar.yml can never reach it. It needs permission to push to main
+    # past branch protection and to create releases.
+    environment: release
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Require main for a real release
+        if: ${{ !inputs.dry_run && github.ref != 'refs/heads/main' }}
+        run: |
+          echo "::error::Releases run from main; other branches support dry_run only"
+          exit 1
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - run: pip install commitizen==4.16.5
+
+      - run: npm ci
+
+      # Commits and tags locally; nothing leaves the runner until the push step.
+      - name: Bump version and changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          args=(--yes)
+          if [ "$INCREMENT" != auto ]; then
+            args+=(--increment "${INCREMENT^^}")
+          fi
+          cz bump "${args[@]}"
+        env:
+          INCREMENT: ${{ inputs.increment }}
+
+      - id: version
+        run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - run: npm test
+
+      - run: npm run package
+
+      # The Marketplace publish downloads this same file from the release.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vhdl-ligatures-vsix
+          path: '*.vsix'
+
+      # The newest changelog section: everything between the first two "## "
+      # headings.
+      - name: Extract release notes
+        run: awk '/^## /{n++; next} n==1' CHANGELOG.md > "$RUNNER_TEMP/release-notes.md"
+
+      - name: Push the bump commit and tag
+        if: ${{ !inputs.dry_run }}
+        run: git push --atomic origin main "refs/tags/$TAG"
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+
+      - name: Create the GitHub Release
+        if: ${{ !inputs.dry_run }}
+        run: >
+          gh release create "$TAG" ./*.vsix
+          --verify-tag
+          --title "$TAG"
+          --notes-file "$RUNNER_TEMP/release-notes.md"
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+
+      # Runs publish.yml on the tag, which the marketplace environment's v*
+      # tag policy requires. The publish run is separate from this one.
+      - name: Start the Marketplace publish
+        if: ${{ !inputs.dry_run }}
+        run: gh workflow run publish.yml --repo "$GITHUB_REPOSITORY" --ref "$TAG" -f tag="$TAG"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}

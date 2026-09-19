@@ -1,55 +1,55 @@
 name: Publish to Marketplace
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag whose .vsix asset is published
+        required: true
+        type: string
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # VSCE_PAT lives here, not as a repository secret, so ci.yml and
-    # bump-grammar.yml can never reach it.
+    # VSCE_PAT lives here, not as a repository secret, so no other workflow
+    # can reach it. The environment only accepts runs on v* tags.
     environment: marketplace
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
 
-      - run: npm ci
+      # Only vsce is needed, at the lockfile's version; postinstall would
+      # fetch the grammar.
+      - run: npm ci --ignore-scripts
 
-      - run: npm test
-
-      # vsce publishes whatever version is in package.json, not the release's
-      # git tag - if someone drafts a release without bumping package.json
-      # first, this would silently republish the old version instead of
-      # failing, so check the two agree before doing anything irreversible.
-      - name: Verify release tag matches package.json version
-        run: |
-          PKG_VERSION="v$(node -p "require('./package.json').version")"
-          TAG="${{ github.event.release.tag_name }}"
-          if [ "$PKG_VERSION" != "$TAG" ]; then
-            echo "Release tag $TAG does not match package.json version $PKG_VERSION"
-            exit 1
-          fi
-
-      - run: npm run package
-
-      # Uploaded before the Marketplace publish step, deliberately - a
-      # downloadable .vsix on the release should still exist even if
-      # publishing to the Marketplace itself fails.
-      - name: Attach the .vsix to the GitHub Release
-        run: gh release upload "${{ github.event.release.tag_name }}" *.vsix --clobber
+      # The .vsix attached to the release is the file that gets published, so
+      # the Marketplace package and the release asset are the same bytes.
+      - name: Download the release's .vsix
+        run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.vsix'
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
 
-      # --packagePath publishes the exact file just uploaded above, instead
-      # of vsce's default behavior of silently repackaging from source again
-      # here - without it, the release asset and the published package are
-      # two separate builds and never have matching checksums, even though
-      # both come from the same commit.
-      - run: npx vsce publish -p "${{ secrets.VSCE_PAT }}" --packagePath *.vsix
+      # vsce publishes the version inside the package, so a mismatch with the
+      # tag would publish under the wrong version.
+      - name: Verify the .vsix version matches the tag
+        run: |
+          VSIX_VERSION=$(unzip -p ./*.vsix extension/package.json | jq -r .version)
+          if [ "v$VSIX_VERSION" != "$TAG" ]; then
+            echo "::error::.vsix version v$VSIX_VERSION does not match tag $TAG"
+            exit 1
+          fi
+        env:
+          TAG: ${{ inputs.tag }}
+
+      - run: npx vsce publish -p "$VSCE_PAT" --packagePath ./*.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
